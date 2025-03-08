@@ -46,7 +46,10 @@ _header: ''
 
 ごめんなさい🙇‍♂️
 
-このスライドは、初めてCursor + Marpで作ったので、そこそこ見えにくいかもです....
+このスライドは、初めて「Cursor + Marp」で作ったので、
+時折違和感のあるスライドやコード記述があります。
+
+何卒ご容赦いただけますと幸いです。。。。
 
 
 
@@ -375,25 +378,85 @@ mutation {
 
 ---
 
-# GraphQL Rubyでの実装例
+# GraphQL Rubyでの実装例（サーバーサイド）
 
-- 
+- ユーザ作成のためのmutationで考えてみる
 
 ```ruby
-class QueryType < GraphQL::Schema::Object
-  field :user, UserType, null: true do
-    argument :id, ID, required: true
-  end
+module Mutations
+  class createUser < BaseMutation
+    argument :name, String, required: true
+    
+    field :user, Types::UserType, null: true
 
-  def user(id:)
-    user = User.find_by(id: id)
-    raise GraphQL::ExecutionError.new(
-      "User not found",
-      extensions: { code: "NOT_FOUND" }
-    ) unless user
-    user
+    def resolve(name:)
+      user = User.new(name:)
+
+      if user.save
+        { user: }
+      else
+        raise_errors(user) # 後述
+      end
+    end
   end
 end
+```
+
+
+---
+
+# GraphQL Rubyでの実装例（サーバーサイド）
+
+- `raise_errors`メソッドで、errorsフィールドにエラーコードを格納する処理
+
+```ruby
+  private
+
+    def raise_errors(user)
+      # userオブジェクトからエラーオブジェクトを取り出す
+      user.errors.each do |error|
+        # エラーの種類に応じて、エラーコードを選択する
+        extension_code = case error.type
+                         when :taken
+                          'NAME_DUPLICATED'
+                        else
+                          'USER_INPUT_ERROR'
+                        end
+    
+        # errorsフィールドを追加
+        context.add_error(GraphQL::ExecutionError.new(error.message, extensions: { code: extension_code }))
+      end
+    end
+```
+
+- サーバーサイドではこれだけ。
+
+---
+
+# GraphQL Rubyでの実装例（フロント）
+
+- エラーコードを元に、メッセージを出し分けるだけで良い
+
+```js
+  createUser({ variables: { input: { name: data.name }}})
+    .then(() => {
+       console.log('作成成功！')
+     })
+    .catch((error) => {
+      const errors = error.graphQLErrors
+
+      errors.forEach((error) => {
+        const extensionCode = error.extensions.code
+
+        if (extensionCode === 'NAME_DUPLICATED') {
+          console.log('すでに登録済みの名前です')
+        }
+
+        if (extensionCode === 'USER_INPUT_ERROR') {
+          console.log('名前が不正です')
+        }
+      })
+    })
 ```
 
 ---
