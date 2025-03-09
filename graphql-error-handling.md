@@ -2,7 +2,7 @@
 marp: true
 theme: default
 paginate: true
-footer: "© 2025 Roppngi.rb"
+footer: "© 2025 Roppongi.rb"
 style: |
   section {
     font-family: 'Arial', 'Helvetica', sans-serif;
@@ -53,7 +53,7 @@ _header: ''
 
 <br>
 
-最近は「コミュニティー活動」への参加を積極的にしようと思い、飛び込みでLT応募しました🙌
+最近は「コミュニティ活動」への参加を積極的にしようと思い、飛び込みでLT応募しました🙌
 もしかしたら今後ちょくちょく顔を出すかもしれないです🙏
 
 </div>
@@ -396,7 +396,7 @@ mutation {
 
 ```ruby
 module Mutations
-  class createUser < BaseMutation
+  class CreateUser < BaseMutation
     argument :name, String, required: true
 
     field :user, Types::UserType, null: true
